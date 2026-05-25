@@ -99,4 +99,4 @@
 | is_active      | boolean           |
 
 # ***ERD - диаграмма проекта S18 Сервис оборудования аудиторий (Room Equipment Service)***
-![Scrinshot](erd.png)
+![ERD-диаграмма](erd.png)
