@@ -98,4 +98,5 @@
 | power_required | boolean           |
 | is_active      | boolean           |
 
-ER - диаграмма проекта S18 Сервис оборудования аудиторий (Room Equipment Service)
+ERD - диаграмма проекта S18 Сервис оборудования аудиторий (Room Equipment Service)
+
