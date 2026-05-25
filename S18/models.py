@@ -27,11 +27,7 @@ class Equipment(BaseModel):
     is_active = BooleanField(default=True)
     created_at = DateTimeField(default=datetime.now)
     updated_at = DateTimeField(default=datetime.now)
-
-    def save(self, *args, **kwargs):
-        self.updated_at = datetime.now()
-        return super().save(*args, **kwargs)
-
+    
     class Meta:
         table_name = 'equipment'
 
