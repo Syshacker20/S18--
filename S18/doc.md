@@ -106,6 +106,7 @@ ER - диаграмма проекта S18 Сервис оборудования
 | int    | floor       |
 | string | building    |
                                                                        
+
 | RoomEquipment |
 | ------------- | --------------- |
 | int           | id              |
@@ -113,6 +114,7 @@ ER - диаграмма проекта S18 Сервис оборудования
 | int           | equipment_id    |
 | int           | quantity        |
 | datetime      | last_check_date |
+
 
 | Equipment |
 | --------- | -------------- |
