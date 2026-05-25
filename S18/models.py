@@ -40,3 +40,11 @@ class RoomEquipment(BaseModel):
 
     class Meta:
         table_name = 'room_equipment'
+
+def init_db():
+    db.connect()
+    db.create_tables([Room, Equipment, RoomEquipment])
+
+if __name__ == '__main__':
+    init_db
+
