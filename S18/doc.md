@@ -98,32 +98,3 @@
 | is_active      | boolean           |
 
 ER - диаграмма проекта S18 Сервис оборудования аудиторий (Room Equipment Service)
-
-| Room   |
-| ------ | ----------- |
-| int    | id          |
-| string | room_number |
-| int    | floor       |
-| string | building    |
-                                                                       
-
-| RoomEquipment |
-| ------------- | --------------- |
-| int           | id              |
-| int           | room_id         |
-| int           | equipment_id    |
-| int           | quantity        |
-| datetime      | last_check_date |
-
-
-| Equipment |
-| --------- | -------------- |
-| int       | id             |
-| string    | name           |
-| string    | description    |
-| string    | equipment_type |
-| boolean   | is_portable    |
-| boolean   | power_required |
-| boolean   | is_acrive      |
-| datetime  | created_at     |
-| datetime  | updated_at     |
