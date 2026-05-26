@@ -46,5 +46,4 @@ def init_db():
     db.create_tables([Room, Equipment, RoomEquipment])
 
 if __name__ == '__main__':
-    init_db
-
+    init_db()  
