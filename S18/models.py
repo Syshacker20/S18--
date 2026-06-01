@@ -28,6 +28,11 @@ class Equipment(BaseModel):
     created_at = DateTimeField(default=datetime.now)
     updated_at = DateTimeField(default=datetime.now)
     
+    def save(self, *args, **kwargs):
+        # Обновляем updated_at при каждом сохранении
+        self.updated_at = datetime.now()
+        return super().save(*args, **kwargs)
+    
     class Meta:
         table_name = 'equipment'
 
@@ -37,13 +42,20 @@ class RoomEquipment(BaseModel):
     equipment = ForeignKeyField(Equipment, backref='room_links')
     quantity = IntegerField(default=1)
     last_check_date = DateTimeField(default=datetime.now)
+    
+    def save(self, *args, **kwargs):
+        # Обновляем last_check_date при сохранении
+        self.last_check_date = datetime.now()
+        return super().save(*args, **kwargs)
 
     class Meta:
         table_name = 'room_equipment'
+
 
 def init_db():
     db.connect()
     db.create_tables([Room, Equipment, RoomEquipment])
 
+
 if __name__ == '__main__':
-    init_db()  
+    init_db()
