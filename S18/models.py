@@ -29,7 +29,6 @@ class Equipment(BaseModel):
     updated_at = DateTimeField(default=datetime.now)
     
     def save(self, *args, **kwargs):
-        # Обновляем updated_at при каждом сохранении
         self.updated_at = datetime.now()
         return super().save(*args, **kwargs)
     
@@ -44,7 +43,6 @@ class RoomEquipment(BaseModel):
     last_check_date = DateTimeField(default=datetime.now)
     
     def save(self, *args, **kwargs):
-        # Обновляем last_check_date при сохранении
         self.last_check_date = datetime.now()
         return super().save(*args, **kwargs)
 
