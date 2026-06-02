@@ -30,7 +30,10 @@ class Equipment(BaseModel):
         else:  # обновление существующей
             if len(self.name) < 2 or len(self.name) > 100:
                 raise ValueError("Название оборудования должно содержать от 2 до 100 символов")
-        
+
+            if self.equipment_type not in ['tech', 'furniture', 'tool']:
+                raise ValueError("equipment_type должен быть одним из: tech, furniture, tool")
+
         if self.description and len(self.description) > 500:
             raise ValueError("Описание должно содержать максимум 500 символов")
         
