@@ -9,15 +9,6 @@ class BaseModel(Model):
         database = db
 
 
-class Room(BaseModel):
-    room_number = CharField(max_length=20, unique=True)
-    floor = IntegerField()
-    building = CharField(max_length=50)
-
-    class Meta:
-        table_name = 'rooms'
-
-
 class Equipment(BaseModel):
     name = CharField(max_length=100, unique=True)
     description = CharField(max_length=500, null=True)
@@ -27,51 +18,43 @@ class Equipment(BaseModel):
     is_active = BooleanField(default=True)
     created_at = DateTimeField(default=datetime.now)
     updated_at = DateTimeField(default=datetime.now)
-    
-    def save(self, *args, **kwargs):
-        self.updated_at = datetime.now()
-        return super().save(*args, **kwargs)
-    
+
     class Meta:
         table_name = 'equipment'
-        indexes = (
-            (('name',), False),  # обычный индекс
-    )
-         def save(self, *args, **kwargs):
-        if len(self.name) < 2:
-            raise ValueError("Название оборудования должно содержать минимум 2 символа")
-        if len(self.name) > 100:
-            raise ValueError("Название оборудования должно содержать максимум 100 символов")
+
+    def save(self, *args, **kwargs):
+        # Валидация при СОЗДАНИИ (нет проверки на минимальную длину)
+        if not self.id:  # новая запись
+            if len(self.name) > 100:
+                raise ValueError("Название оборудования должно содержать максимум 100 символов")
+        else:  # обновление существующей
+            if len(self.name) < 2 or len(self.name) > 100:
+                raise ValueError("Название оборудования должно содержать от 2 до 100 символов")
+        
         if self.description and len(self.description) > 500:
             raise ValueError("Описание должно содержать максимум 500 символов")
+        
         self.updated_at = datetime.now()
         return super().save(*args, **kwargs)
 
-          def soft_delete(self):
+    def soft_delete(self):
+        if not self.is_active:
+            return False
         self.is_active = False
         self.save()
+        return True
 
-        def restore(self):
+    def restore(self):
+        if self.is_active:
+            return False
         self.is_active = True
         self.save()
-
-class RoomEquipment(BaseModel):
-    room = ForeignKeyField(Room, backref='equipment_links')
-    equipment = ForeignKeyField(Equipment, backref='room_links')
-    quantity = IntegerField(default=1)
-    last_check_date = DateTimeField(default=datetime.now)
-    
-    def save(self, *args, **kwargs):
-        self.last_check_date = datetime.now()
-        return super().save(*args, **kwargs)
-
-    class Meta:
-        table_name = 'room_equipment'
+        return True
 
 
 def init_db():
     db.connect()
-    db.create_tables([Room, Equipment, RoomEquipment])
+    db.create_tables([Equipment])
 
 
 if __name__ == '__main__':
