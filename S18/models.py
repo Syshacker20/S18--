@@ -34,7 +34,26 @@ class Equipment(BaseModel):
     
     class Meta:
         table_name = 'equipment'
+        indexes = (
+            (('name',), False),  # обычный индекс
+    )
+         def save(self, *args, **kwargs):
+        if len(self.name) < 2:
+            raise ValueError("Название оборудования должно содержать минимум 2 символа")
+        if len(self.name) > 100:
+            raise ValueError("Название оборудования должно содержать максимум 100 символов")
+        if self.description and len(self.description) > 500:
+            raise ValueError("Описание должно содержать максимум 500 символов")
+        self.updated_at = datetime.now()
+        return super().save(*args, **kwargs)
 
+          def soft_delete(self):
+        self.is_active = False
+        self.save()
+
+        def restore(self):
+        self.is_active = True
+        self.save()
 
 class RoomEquipment(BaseModel):
     room = ForeignKeyField(Room, backref='equipment_links')
