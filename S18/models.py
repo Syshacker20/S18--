@@ -1,9 +1,10 @@
 from peewee import *
 from datetime import datetime
-from typing import List, Dict, Any, Optional
+from typing import List, Optional, Dict, Any
 from enum import Enum
 
 db = SqliteDatabase('room_equipment.db')
+
 
 class EquipmentType(str, Enum):
     TECH = "tech"
@@ -18,16 +19,18 @@ class EquipmentType(str, Enum):
     def is_valid(cls, value: str) -> bool:
         return value in cls.get_values()
 
+
 class BaseModel(Model):
     class Meta:
         database = db
+
 
 class Equipment(BaseModel):
     name = CharField(max_length=100, unique=True)
     description = CharField(max_length=500, null=True)
     equipment_type = CharField(
-        max_length=20, 
-        choices=[(e.value, e.name) for e in EquipmentType], 
+        max_length=20,
+        choices=[(e.value, e.name) for e in EquipmentType],
         default=EquipmentType.TECH.value
     )
     is_portable = BooleanField(default=False)
@@ -41,8 +44,8 @@ class Equipment(BaseModel):
 
     def save(self, *args, **kwargs):
         is_new = self.id is None
+        
         if is_new:
-            # При создании: только максимальная длина (мин. длина не требуется)
             if len(self.name) > 100:
                 raise ValueError("Название оборудования должно содержать максимум 100 символов")
         else:
@@ -56,7 +59,6 @@ class Equipment(BaseModel):
             raise ValueError(f"Тип оборудования должен быть одним из: {', '.join(EquipmentType.get_values())}")
         
         if not is_new:
-            # Проверяем, были ли изменения в полях (кроме updated_at)
             dirty_fields = [f for f in self.dirty_fields if f != 'updated_at']
             if dirty_fields:
                 self.updated_at = datetime.now()
@@ -65,7 +67,6 @@ class Equipment(BaseModel):
 
     @classmethod
     def soft_delete_by_id(cls, equipment_id: int) -> bool:
-      запись не найдена или уже удалена
         try:
             equipment = cls.get_by_id(equipment_id)
             if not equipment.is_active:
@@ -76,6 +77,7 @@ class Equipment(BaseModel):
             return True
         except DoesNotExist:
             return False
+
     def soft_delete(self) -> bool:
         if not self.is_active:
             return False
@@ -107,7 +109,7 @@ class Equipment(BaseModel):
             return None
 
     @classmethod
-    def filter_equipment(cls, 
+    def filter_equipment(cls,
                          equipment_type: Optional[str] = None,
                          is_portable: Optional[bool] = None,
                          power_required: Optional[bool] = None,
@@ -122,6 +124,7 @@ class Equipment(BaseModel):
             raise ValueError("offset должен быть >= 0")
         
         query = cls.select()
+        
 
         if equipment_type:
             if not EquipmentType.is_valid(equipment_type):
@@ -136,6 +139,7 @@ class Equipment(BaseModel):
         if search:
             query = query.where(cls.name.contains(search))
         
+        # Пагинация
         query = query.limit(limit).offset(offset)
         
         return list(query)
@@ -147,6 +151,7 @@ class Equipment(BaseModel):
                        power_required: Optional[bool] = None,
                        is_active: bool = True,
                        search: Optional[str] = None) -> int:
+
         query = cls.select()
         
         if equipment_type:
@@ -164,8 +169,8 @@ class Equipment(BaseModel):
         
         return query.count()
 
-    def to_dict(self, include_sensitive: bool = False) -> Dict[str, Any]:
-        """Преобразует объект в словарь для API ответов"""
+    def to_dict(self, for_list: bool = False) -> Dict[str, Any]:
+  
         data = {
             "id": self.id,
             "name": self.name,
@@ -174,16 +179,14 @@ class Equipment(BaseModel):
             "is_portable": self.is_portable,
             "power_required": self.power_required,
             "is_active": self.is_active,
-            "created_at": self.created_at.isoformat() if self.created_at else None,
         }
-        if self.updated_at:
-            data["updated_at"] = self.updated_at.isoformat()
-        else:
-            data["updated_at"] = None
+        
+        if not for_list:
+            data["created_at"] = self.created_at.isoformat() if self.created_at else None
+            data["updated_at"] = self.updated_at.isoformat() if self.updated_at else None
         
         return data
-
-
+        
 def init_db():
     db.connect()
     db.create_tables([Equipment])
