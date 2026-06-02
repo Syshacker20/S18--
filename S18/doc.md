@@ -35,7 +35,7 @@
 | -------------- | -------------- | -------------- | ------- | --------------------- |
 | name           | Новое название | Нет            | string  | 2..100, уникально     |
 | description    | Новое описание | Нет            | string  | до 500 символов       |
-| equipment_type | Новый тип      | Нет            | enum    | tech, furniture, tool |
+| equipment_type | Новый тип      | Нет            | string  | tech, furniture, tool |
 | is_portable    | Переносное?    | Нет            | boolean | true/false            |
 | power_required | Нужно питание? | Нет            | boolean | true/false            |
 
