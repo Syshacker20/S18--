@@ -5,6 +5,7 @@ from enum import Enum
 
 db = SqliteDatabase('room_equipment.db')
 
+
 class EquipmentType(str, Enum):
     TECH = "tech"
     FURNITURE = "furniture"
@@ -18,6 +19,7 @@ class EquipmentType(str, Enum):
     def is_valid(cls, value: str) -> bool:
         return value in cls.get_values()
 
+
 class EnumCharField(CharField):
     def __init__(self, enum_class, *args, **kwargs):
         self.enum_class = enum_class
@@ -30,9 +32,11 @@ class EnumCharField(CharField):
             raise ValueError(f"Значение должно быть одним из: {self.enum_class.get_values()}")
         return super().validate(value)
 
+
 class BaseModel(Model):
     class Meta:
         database = db
+
 
 class Equipment(BaseModel):
     name = CharField(max_length=100, unique=True)
@@ -40,9 +44,9 @@ class Equipment(BaseModel):
     equipment_type = EnumCharField(EquipmentType, default=EquipmentType.TECH.value)
     is_portable = BooleanField(default=False)
     power_required = BooleanField(default=False)
-    is_active = BooleanField(default=True)  # Новое оборудование активно по умолчанию
+    is_active = BooleanField(default=True)
     created_at = DateTimeField(default=datetime.now)
-    updated_at = DateTimeField(null=True)  # При создании = NULL
+    updated_at = DateTimeField(null=True)
 
     class Meta:
         table_name = 'equipment'
@@ -60,7 +64,7 @@ class Equipment(BaseModel):
                 raise ValueError("Название оборудования не может быть пустым")
             if len(self.name) < 2 or len(self.name) > 100:
                 raise ValueError("Название оборудования должно содержать от 2 до 100 символов")
-
+        
         if self.description is not None and len(self.description) > 500:
             raise ValueError("Описание должно содержать максимум 500 символов")
         
@@ -73,7 +77,6 @@ class Equipment(BaseModel):
 
     @classmethod
     def soft_delete_by_id(cls, equipment_id: int) -> bool:
-
         try:
             equipment = cls.get_by_id(equipment_id)
             if not equipment.is_active:
@@ -86,7 +89,6 @@ class Equipment(BaseModel):
             return False
 
     def soft_delete(self) -> bool:
-        """Soft delete текущего экземпляра"""
         if not self.is_active:
             return False
         self.is_active = False
@@ -95,7 +97,6 @@ class Equipment(BaseModel):
         return True
 
     def restore(self) -> bool:
-
         if self.is_active:
             return False
         self.is_active = True
@@ -127,11 +128,6 @@ class Equipment(BaseModel):
                          limit: int = 20,
                          offset: int = 0) -> List['Equipment']:
 
-        if limit < 1 or limit > 100:
-            raise ValueError("limit должен быть от 1 до 100")
-        if offset < 0:
-            raise ValueError("offset должен быть >= 0")
-        
         query = cls.select()
         
         if equipment_type:
@@ -147,7 +143,15 @@ class Equipment(BaseModel):
         if search:
             query = query.where(cls.name.contains(search))
         
-        query = query.limit(limit).offset(offset)
+        try:
+            limit_int = int(limit)
+            offset_int = int(offset)
+        except (TypeError, ValueError):
+            limit_int = 20
+            offset_int = 0
+        
+        query = query.limit(limit_int).offset(offset_int)
+        
         return list(query)
 
     @classmethod
@@ -175,7 +179,6 @@ class Equipment(BaseModel):
         return query.count()
 
     def to_dict(self, for_list: bool = False) -> Dict[str, Any]:
-        """Преобразует объект в словарь для API ответов"""
         data = {
             "id": self.id,
             "name": self.name,
