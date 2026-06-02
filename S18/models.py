@@ -54,20 +54,32 @@ class Equipment(BaseModel):
     def save(self, *args, **kwargs):
         is_new = self.id is None
         
+        if not self.name or not self.name.strip():
+            raise ValueError("Название оборудования обязательно для заполнения")
+        
         if is_new:
-            if not self.name or not self.name.strip():
-                raise ValueError("Название оборудования обязательно для заполнения")
             if len(self.name) > 100:
                 raise ValueError("Название оборудования должно содержать максимум 100 символов")
         else:
-            if not self.name or not self.name.strip():
-                raise ValueError("Название оборудования не может быть пустым")
             if len(self.name) < 2 or len(self.name) > 100:
                 raise ValueError("Название оборудования должно содержать от 2 до 100 символов")
+        
+        if is_new:
+            exists = Equipment.select().where(Equipment.name == self.name).exists()
+            if exists:
+                raise ValueError(f"Оборудование с названием '{self.name}' уже существует")
+        else:
+            if self.dirty_fields and 'name' in self.dirty_fields:
+                exists = Equipment.select().where(
+                    (Equipment.name == self.name) & (Equipment.id != self.id)
+                ).exists()
+                if exists:
+                    raise ValueError(f"Оборудование с названием '{self.name}' уже существует")
         
         if self.description is not None and len(self.description) > 500:
             raise ValueError("Описание должно содержать максимум 500 символов")
         
+
         if not is_new:
             dirty_fields = [f for f in self.dirty_fields if f != 'updated_at']
             if dirty_fields:
@@ -89,6 +101,7 @@ class Equipment(BaseModel):
             return False
 
     def soft_delete(self) -> bool:
+        """Soft delete текущего экземпляра"""
         if not self.is_active:
             return False
         self.is_active = False
@@ -112,6 +125,14 @@ class Equipment(BaseModel):
             return None
 
     @classmethod
+    def get_equipment_by_id(cls, equipment_id: int) -> Optional[Dict[str, Any]]:
+
+        equipment = cls.get_by_id_or_none(equipment_id)
+        if equipment is None:
+            return None
+        return equipment.to_dict(for_list=False)
+
+    @classmethod
     def get_active_by_id(cls, equipment_id: int) -> Optional['Equipment']:
         try:
             return cls.get((cls.id == equipment_id) & (cls.is_active == True))
@@ -123,11 +144,16 @@ class Equipment(BaseModel):
                          equipment_type: Optional[str] = None,
                          is_portable: Optional[bool] = None,
                          power_required: Optional[bool] = None,
-                         is_active: bool = True,
+                         is_active: Optional[bool] = None,
                          search: Optional[str] = None,
                          limit: int = 20,
                          offset: int = 0) -> List['Equipment']:
 
+        if not isinstance(limit, int) or limit <= 0:
+            raise ValueError("limit должен быть целым положительным числом")
+        if not isinstance(offset, int) or offset < 0:
+            raise ValueError("offset должен быть целым неотрицательным числом")
+        
         query = cls.select()
         
         if equipment_type:
@@ -143,23 +169,37 @@ class Equipment(BaseModel):
         if search:
             query = query.where(cls.name.contains(search))
         
-        try:
-            limit_int = int(limit)
-            offset_int = int(offset)
-        except (TypeError, ValueError):
-            limit_int = 20
-            offset_int = 0
-        
-        query = query.limit(limit_int).offset(offset_int)
+        query = query.limit(limit).offset(offset)
         
         return list(query)
+
+    @classmethod
+    def filter_equipment_dict(cls,
+                              equipment_type: Optional[str] = None,
+                              is_portable: Optional[bool] = None,
+                              power_required: Optional[bool] = None,
+                              is_active: Optional[bool] = None,
+                              search: Optional[str] = None,
+                              limit: int = 20,
+                              offset: int = 0) -> List[Dict[str, Any]]:
+
+        equipment_list = cls.filter_equipment(
+            equipment_type=equipment_type,
+            is_portable=is_portable,
+            power_required=power_required,
+            is_active=is_active,
+            search=search,
+            limit=limit,
+            offset=offset
+        )
+        return [e.to_dict(for_list=True) for e in equipment_list]
 
     @classmethod
     def count_filtered(cls,
                        equipment_type: Optional[str] = None,
                        is_portable: Optional[bool] = None,
                        power_required: Optional[bool] = None,
-                       is_active: bool = True,
+                       is_active: Optional[bool] = None,
                        search: Optional[str] = None) -> int:
         query = cls.select()
         
